@@ -39,14 +39,15 @@ func SetupRoutes(
 	userService := service.NewUserService(userRepo, logger)
 	productService := service.NewProductService(productRepo, categoryRepo, logger)
 	categoryService := service.NewCategoryService(categoryRepo, logger)
-	orderService := service.NewOrderService(orderRepo, cartRepo, paymentRepo, inventoryRepo, logger)
+	orderService := service.NewOrderService(orderRepo, cartRepo, paymentRepo, inventoryRepo, logger, db)
 	cartService := service.NewCartService(cartRepo, productRepo, logger)
-	paymentService := service.NewPaymentService(cfg, paymentRepo, orderRepo, logger)
+	paymentService := service.NewPaymentService(cfg, paymentRepo, orderRepo, inventoryRepo, logger, db)
 	voucherService := service.NewVoucherService(voucherRepo, logger)
 	reviewService := service.NewReviewService(reviewRepo, logger)
 	trendService := service.NewTrendService(cfg, trendRepo, productRepo, redisClient, logger)
 	shippingService := service.NewShippingService(cfg, logger)
 	reportService := service.NewReportService(orderRepo, productRepo, userRepo, logger)
+	inventoryService := service.NewInventoryService(inventoryRepo, productRepo, logger, db)
 
 	// Initialize handlers
 	authHandler := handler.NewAuthHandler(authService, logger)
@@ -61,6 +62,7 @@ func SetupRoutes(
 	trendHandler := handler.NewTrendHandler(trendService, logger)
 	shippingHandler := handler.NewShippingHandler(shippingService, logger)
 	reportHandler := handler.NewReportHandler(reportService, logger)
+	inventoryHandler := handler.NewInventoryHandler(inventoryService, logger)
 	webhookHandler := handler.NewWebhookHandler(paymentService, logger)
 
 	// API v1

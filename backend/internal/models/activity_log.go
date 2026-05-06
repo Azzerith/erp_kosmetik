@@ -1,8 +1,9 @@
 package models
 
 import (
-	"database/sql"
 	"time"
+
+	"gorm.io/datatypes"
 )
 
 type ActivityLog struct {
@@ -11,8 +12,8 @@ type ActivityLog struct {
 	Action     string         `gorm:"type:varchar(100);not null" json:"action"`
 	EntityType *string        `gorm:"type:varchar(50)" json:"entity_type,omitempty"`
 	EntityID   *uint64        `json:"entity_id,omitempty"`
-	OldValues  sql.NullJSON   `gorm:"type:json" json:"old_values,omitempty"`
-	NewValues  sql.NullJSON   `gorm:"type:json" json:"new_values,omitempty"`
+	OldValues  datatypes.JSON `gorm:"type:json" json:"old_values,omitempty"`
+	NewValues  datatypes.JSON `gorm:"type:json" json:"new_values,omitempty"`
 	IPAddress  *string        `gorm:"type:varchar(45)" json:"ip_address,omitempty"`
 	UserAgent  *string        `gorm:"type:text" json:"user_agent,omitempty"`
 	CreatedAt  time.Time      `json:"created_at"`

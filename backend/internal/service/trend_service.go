@@ -122,7 +122,7 @@ func (s *trendService) GetProductTrendScore(ctx context.Context, productID uint6
 	}
 
 	// Get trend history
-	history, err := s.trendRepo.GetTrendHistory(ctx, productID, 30)
+	_, err = s.trendRepo.GetTrendHistory(ctx, productID, 30)
 	if err != nil {
 		s.logger.Warn("Failed to get trend history", zap.Error(err))
 	}
@@ -150,7 +150,7 @@ func (s *trendService) RefreshTrends(ctx context.Context) error {
 	}
 
 	// Fetch trends from TikTok
-	tiktokTrends, err := s.fetchTikTokTrends(ctx)
+	_, err = s.fetchTikTokTrends(ctx)
 	if err != nil {
 		s.logger.Error("Failed to fetch TikTok Trends", zap.Error(err))
 		// Continue with Google trends only
@@ -311,7 +311,7 @@ func (s *trendService) calculateProductTrendScore(product models.Product, trends
 	return maxScore
 }
 
-func (s *trendService) calculateSalesVelocity(product models.Product) float64 {
+func (s *trendService) calculateSalesVelocity(product *models.Product) float64 {
 	// Calculate sales velocity based on recent sales
 	// Simplified - would need to query recent order items
 	if product.TotalSold == 0 {

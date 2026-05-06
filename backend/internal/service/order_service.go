@@ -65,6 +65,7 @@ func NewOrderService(
 	paymentRepo repository.PaymentRepository,
 	inventoryRepo repository.InventoryRepository,
 	logger *zap.Logger,
+	db *gorm.DB,
 ) OrderService {
 	return &orderService{
 		orderRepo:     orderRepo,
@@ -72,6 +73,7 @@ func NewOrderService(
 		paymentRepo:   paymentRepo,
 		inventoryRepo: inventoryRepo,
 		logger:        logger,
+		db:            db,
 	}
 }
 

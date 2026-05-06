@@ -10,6 +10,7 @@ import (
 type PaymentRepository interface {
 	Create(ctx context.Context, payment *models.Payment) error
 	Update(ctx context.Context, payment *models.Payment) error
+	FindByID(ctx context.Context, id uint64) (*models.Payment, error)
 	FindByOrderID(ctx context.Context, orderID uint64) (*models.Payment, error)
 	FindByTransactionID(ctx context.Context, transactionID string) (*models.Payment, error)
 	CreateLog(ctx context.Context, log *models.PaymentLog) error
@@ -29,6 +30,12 @@ func (r *paymentRepository) Create(ctx context.Context, payment *models.Payment)
 
 func (r *paymentRepository) Update(ctx context.Context, payment *models.Payment) error {
 	return r.db.WithContext(ctx).Save(payment).Error
+}
+
+func (r *paymentRepository) FindByID(ctx context.Context, id uint64) (*models.Payment, error) {
+	var payment models.Payment
+	err := r.db.WithContext(ctx).First(&payment, id).Error
+	return &payment, err
 }
 
 func (r *paymentRepository) FindByOrderID(ctx context.Context, orderID uint64) (*models.Payment, error) {

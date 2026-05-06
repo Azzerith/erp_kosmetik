@@ -15,6 +15,7 @@ import (
 	"github.com/midtrans/midtrans-go/coreapi"
 	"github.com/midtrans/midtrans-go/snap"
 	"go.uber.org/zap"
+	"gorm.io/datatypes"
 	"gorm.io/gorm"
 )
 
@@ -50,10 +51,11 @@ func NewPaymentService(
 	orderRepo repository.OrderRepository,
 	inventoryRepo repository.InventoryRepository,
 	logger *zap.Logger,
+	db *gorm.DB,
 ) PaymentService {
 	// Initialize Midtrans client
 	var snapClient snap.Client
-	var coreClient coreapi.Client
+	var coreapiClient coreapi.Client
 	
 	if cfg.MidtransServerKey != "" {
 		snapClient.New(cfg.MidtransServerKey, midtrans.Sandbox)
@@ -61,9 +63,9 @@ func NewPaymentService(
 			snapClient.New(cfg.MidtransServerKey, midtrans.Production)
 		}
 		
-		coreClient.New(cfg.MidtransServerKey, midtrans.Sandbox)
+		coreapiClient.New(cfg.MidtransServerKey, midtrans.Sandbox)
 		if cfg.MidtransEnvironment == "production" {
-			coreClient.New(cfg.MidtransServerKey, midtrans.Production)
+			coreapiClient.New(cfg.MidtransServerKey, midtrans.Production)
 		}
 	}
 
@@ -73,8 +75,9 @@ func NewPaymentService(
 		orderRepo:    orderRepo,
 		inventoryRepo: inventoryRepo,
 		logger:       logger,
+		db:           db,
 		snapClient:   snapClient,
-		coreClient:   coreClient,
+		coreClient:   coreapiClient,
 	}
 }
 
@@ -120,7 +123,6 @@ func (s *paymentService) InitiatePayment(ctx context.Context, orderID uint64) (s
 			Email: order.User.Email,
 			Phone: s.getUserPhone(order.User),
 		},
-		EnabledPayments: snap.AllPaymentType,
 	}
 
 	// Create Snap transaction
@@ -241,8 +243,8 @@ func (s *paymentService) RefundPayment(ctx context.Context, paymentID uint64, am
 		Amount:    int64(amount),
 		Reason:    reason,
 	}
-
-	refundResp, err := s.coreClient.Refund(payment.TransactionID, refundReq)
+	
+	refundResp, err := s.coreClient.RefundTransaction(payment.TransactionID, refundReq)
 	if err != nil {
 		s.logger.Error("Failed to process refund", zap.Error(err))
 		return errors.New("refund failed")
@@ -377,10 +379,9 @@ func (s *paymentService) mapMidtransStatus(status string) string {
 	}
 }
 
-func (s *paymentService) toJSON(data interface{}) struct {
-	Data interface{} `json:"data"`
-} {
-	return struct{ Data interface{} }{Data: data}
+func (s *paymentService) toJSON(data interface{}) datatypes.JSON {
+	b, _ := json.Marshal(data)
+	return datatypes.JSON(b)
 }
 
 func (s *paymentService) timePtr(t time.Time) *time.Time {

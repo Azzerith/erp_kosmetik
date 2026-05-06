@@ -1,9 +1,9 @@
 package midtrans
 
 import (
-	"errors"
 	"fmt"
 
+	"erp-cosmetics-backend/internal/utils"
 	"github.com/midtrans/midtrans-go"
 	"github.com/midtrans/midtrans-go/coreapi"
 	"github.com/midtrans/midtrans-go/snap"
@@ -12,6 +12,7 @@ import (
 type MidtransClient struct {
 	snapClient   snap.Client
 	coreClient   coreapi.Client
+	serverKey    string
 	isProduction bool
 }
 
@@ -49,17 +50,18 @@ func NewMidtransClient(serverKey string, isProduction bool) *MidtransClient {
 	var snapClient snap.Client
 	var coreClient coreapi.Client
 	
-	snapClient.New(serverKey, midtrans.Sandbox)
-	coreClient.New(serverKey, midtrans.Sandbox)
-	
+	env := midtrans.Sandbox
 	if isProduction {
-		snapClient.New(serverKey, midtrans.Production)
-		coreClient.New(serverKey, midtrans.Production)
+		env = midtrans.Production
 	}
+	
+	snapClient.New(serverKey, env)
+	coreClient.New(serverKey, env)
 	
 	return &MidtransClient{
 		snapClient:   snapClient,
 		coreClient:   coreClient,
+		serverKey:    serverKey,
 		isProduction: isProduction,
 	}
 }
@@ -92,7 +94,6 @@ func (c *MidtransClient) CreateSnapTransaction(req *SnapRequest) (*SnapResponse,
 		},
 		Items:          &items,
 		CustomerDetail: customer,
-		EnabledPayments: snap.AllPaymentType,
 	}
 	
 	// Create transaction
@@ -122,14 +123,14 @@ func (c *MidtransClient) RefundTransaction(orderID string, amount int64, reason 
 		Reason:    reason,
 	}
 	
-	resp, err := c.coreClient.Refund(orderID, refundReq)
+	resp, err := c.coreClient.RefundTransaction(orderID, refundReq)
 	if err != nil {
 		return nil, err
 	}
 	return resp, nil
 }
 
-func (c *MidtransClient) CancelTransaction(orderID string) (*coreapi.TransactionStatusResponse, error) {
+func (c *MidtransClient) CancelTransaction(orderID string) (*coreapi.ChargeResponse, error) {
 	resp, err := c.coreClient.CancelTransaction(orderID)
 	if err != nil {
 		return nil, err
@@ -140,11 +141,10 @@ func (c *MidtransClient) CancelTransaction(orderID string) (*coreapi.Transaction
 func (c *MidtransClient) VerifySignature(orderID, statusCode, grossAmount, signatureKey string) bool {
 	// Calculate expected signature
 	// serverKey + orderID + statusCode + grossAmount + serverKey
-	expected := c.snapClient.CoreApi.GetEnv().ServerKey + orderID + statusCode + grossAmount + c.snapClient.CoreApi.GetEnv().ServerKey
+	data := orderID + statusCode + grossAmount + c.serverKey
+	expected := utils.GenerateSHA512(data)
 	
-	// This should be compared with signatureKey
-	// For now, return true for demo
-	return true
+	return expected == signatureKey
 }
 
 func (c *MidtransClient) GetStatusMessage(statusCode string) string {

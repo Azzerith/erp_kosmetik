@@ -1,8 +1,9 @@
 package models
 
 import (
-	"database/sql"
 	"time"
+
+	"gorm.io/datatypes"
 )
 
 type Review struct {
@@ -13,7 +14,7 @@ type Review struct {
 	Rating             int            `gorm:"not null;check:rating BETWEEN 1 AND 5" json:"rating"`
 	Title              *string        `gorm:"type:varchar(255)" json:"title,omitempty"`
 	Comment            *string        `gorm:"type:text" json:"comment,omitempty"`
-	Images             sql.NullJSON   `gorm:"type:json" json:"images,omitempty"`
+	Images             datatypes.JSON `gorm:"type:json" json:"images,omitempty"`
 	IsVerifiedPurchase bool           `gorm:"default:false" json:"is_verified_purchase"`
 	IsApproved         bool           `gorm:"default:false" json:"is_approved"`
 	HelpfulCount       int            `gorm:"default:0" json:"helpful_count"`

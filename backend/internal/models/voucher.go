@@ -1,8 +1,9 @@
 package models
 
 import (
-	"database/sql"
 	"time"
+
+	"gorm.io/datatypes"
 )
 
 type Voucher struct {
@@ -15,7 +16,7 @@ type Voucher struct {
 	MaxDiscountAmount *float64      `gorm:"type:decimal(15,2)" json:"max_discount_amount,omitempty"`
 	MinOrderAmount   float64        `gorm:"type:decimal(15,2);default:0" json:"min_order_amount"`
 	ApplicableType   string         `gorm:"type:enum('all','specific_products','specific_categories');default:'all'" json:"applicable_type"`
-	ApplicableIDs    sql.NullJSON   `gorm:"type:json" json:"applicable_ids,omitempty"`
+	ApplicableIDs    datatypes.JSON `gorm:"type:json" json:"applicable_ids,omitempty"`
 	UsageLimit       *int           `json:"usage_limit,omitempty"`
 	UsagePerUser     *int           `json:"usage_per_user,omitempty"`
 	UsedCount        int            `gorm:"default:0" json:"used_count"`

@@ -97,7 +97,7 @@ func (h *ReviewHandler) UpdateReview(c *gin.Context) {
 }
 
 func (h *ReviewHandler) DeleteReview(c *gin.Context) {
-	userID := c.GetUint64("user_id")
+	_ = c.GetUint64("user_id") // userID
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
 		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid review ID", err)
