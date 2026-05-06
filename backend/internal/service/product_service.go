@@ -2,17 +2,13 @@ package service
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"strings"
 
 	"erp-cosmetics-backend/internal/models"
 	"erp-cosmetics-backend/internal/repository"
 
-	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
-	"gorm.io/gorm"
 )
 
 type ProductService interface {

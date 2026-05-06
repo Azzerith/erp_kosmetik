@@ -12,7 +12,6 @@ import (
 	"erp-cosmetics-backend/internal/repository"
 	"erp-cosmetics-backend/internal/utils"
 
-	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"

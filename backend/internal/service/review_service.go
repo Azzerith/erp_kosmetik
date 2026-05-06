@@ -8,7 +8,6 @@ import (
 	"erp-cosmetics-backend/internal/repository"
 
 	"go.uber.org/zap"
-	"gorm.io/gorm"
 )
 
 type ReviewService interface {

@@ -51,7 +51,7 @@ func ErrorResponse(c *gin.Context, statusCode int, message string, err error) {
 	})
 }
 
-func ValidationErrorResponse(c *gin.Context, errors map[string]string) {
+func ValidationResponse(c *gin.Context, errors map[string]string) {
 	c.JSON(http.StatusBadRequest, Response{
 		Success: false,
 		Message: "Validation failed",

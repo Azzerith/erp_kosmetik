@@ -1,9 +1,9 @@
 package models
 
 import (
-	"database/sql"
 	"time"
 
+	"gorm.io/datatypes"
 	"gorm.io/gorm"
 )
 
@@ -38,7 +38,7 @@ type Product struct {
 	// Trend
 	TrendScore      float64       `gorm:"type:decimal(5,2);default:0" json:"trend_score"`
 	TrendBadge      string        `gorm:"type:enum('trending','viral','best_seller','hot','none');default:'none'" json:"trend_badge"`
-	TrendKeywords   sql.NullJSON  `gorm:"type:json" json:"trend_keywords,omitempty"`
+	TrendKeywords   datatypes.JSON `gorm:"type:json" json:"trend_keywords,omitempty"`
 
 	// Sales & Stock
 	TotalSold        int          `gorm:"default:0" json:"total_sold"`

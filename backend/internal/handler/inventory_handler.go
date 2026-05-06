@@ -32,19 +32,8 @@ type AdjustStockRequest struct {
 }
 
 func (h *InventoryHandler) GetInventory(c *gin.Context) {
-	page := 1
-	if p := c.Query("page"); p != "" {
-		if parsed, err := strconv.Atoi(p); err == nil && parsed > 0 {
-			page = parsed
-		}
-	}
-	
-	limit := 20
-	if l := c.Query("limit"); l != "" {
-		if parsed, err := strconv.Atoi(l); err == nil && parsed > 0 {
-			limit = parsed
-		}
-	}
+	_ = 1 // page
+	_ = 20 // limit
 	
 	// Get inventory list
 	// This would come from inventory service

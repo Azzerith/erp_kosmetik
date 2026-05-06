@@ -30,11 +30,13 @@ func NewInventoryService(
 	inventoryRepo repository.InventoryRepository,
 	productRepo repository.ProductRepository,
 	logger *zap.Logger,
+	db *gorm.DB,
 ) InventoryService {
 	return &inventoryService{
 		inventoryRepo: inventoryRepo,
 		productRepo:   productRepo,
 		logger:        logger,
+		db:            db,
 	}
 }
 

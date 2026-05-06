@@ -1,8 +1,9 @@
 package models
 
 import (
-	"database/sql"
 	"time"
+
+	"gorm.io/datatypes"
 )
 
 type Voucher struct {
@@ -15,7 +16,7 @@ type Voucher struct {
 	MaxDiscountAmount *float64      `gorm:"type:decimal(15,2)" json:"max_discount_amount,omitempty"`
 	MinOrderAmount   float64        `gorm:"type:decimal(15,2);default:0" json:"min_order_amount"`
 	ApplicableType   string         `gorm:"type:enum('all','specific_products','specific_categories');default:'all'" json:"applicable_type"`
-	ApplicableIDs    sql.NullJSON   `gorm:"type:json" json:"applicable_ids,omitempty"`
+	ApplicableIDs    datatypes.JSON `gorm:"type:json" json:"applicable_ids,omitempty"`
 	UsageLimit       *int           `json:"usage_limit,omitempty"`
 	UsagePerUser     *int           `json:"usage_per_user,omitempty"`
 	UsedCount        int            `gorm:"default:0" json:"used_count"`
@@ -27,7 +28,7 @@ type Voucher struct {
 	UpdatedAt        time.Time      `json:"updated_at"`
 
 	// Relationships
-	Creator User `json:"creator,omitempty"`
+	Creator User `gorm:"foreignKey:CreatedBy" json:"creator,omitempty"`
 	Usages  []VoucherUsage `json:"usages,omitempty"`
 }
 
@@ -41,7 +42,7 @@ type VoucherUsage struct {
 	UserID         uint64    `gorm:"not null;index" json:"user_id"`
 	OrderID        uint64    `gorm:"not null;index" json:"order_id"`
 	DiscountAmount float64   `gorm:"type:decimal(15,2);not null" json:"discount_amount"`
-	UsedAt         time.Time `gorm:"default:CURRENT_TIMESTAMP" json:"used_at"`
+	UsedAt         time.Time `gorm:"autoCreateTime" json:"used_at"`
 
 	// Relationships
 	Voucher Voucher `json:"-"`

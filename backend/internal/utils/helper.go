@@ -2,6 +2,7 @@ package utils
 
 import (
 	"crypto/rand"
+	"crypto/sha512"
 	"encoding/hex"
 	"fmt"
 	"math"
@@ -151,4 +152,11 @@ func GetOrDefault[T any](ptr *T, defaultValue T) T {
 		return defaultValue
 	}
 	return *ptr
+}
+
+// GenerateSHA512 generates a SHA512 hash of the input string
+func GenerateSHA512(input string) string {
+	h := sha512.New()
+	h.Write([]byte(input))
+	return hex.EncodeToString(h.Sum(nil))
 }
