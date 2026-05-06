@@ -28,7 +28,7 @@ type Voucher struct {
 	UpdatedAt        time.Time      `json:"updated_at"`
 
 	// Relationships
-	Creator User `json:"creator,omitempty"`
+	Creator User `gorm:"foreignKey:CreatedBy" json:"creator,omitempty"`
 	Usages  []VoucherUsage `json:"usages,omitempty"`
 }
 
@@ -42,7 +42,7 @@ type VoucherUsage struct {
 	UserID         uint64    `gorm:"not null;index" json:"user_id"`
 	OrderID        uint64    `gorm:"not null;index" json:"order_id"`
 	DiscountAmount float64   `gorm:"type:decimal(15,2);not null" json:"discount_amount"`
-	UsedAt         time.Time `gorm:"default:CURRENT_TIMESTAMP" json:"used_at"`
+	UsedAt         time.Time `gorm:"autoCreateTime" json:"used_at"`
 
 	// Relationships
 	Voucher Voucher `json:"-"`

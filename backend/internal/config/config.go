@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"net/url"
 	"time"
 
 	"github.com/spf13/viper"
@@ -123,5 +124,5 @@ func LoadConfig() (*Config, error) {
 // GetDSN returns MySQL DSN string
 func (c *Config) GetDSN() string {
 	return fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=%s",
-		c.DBUser, c.DBPassword, c.DBHost, c.DBPort, c.DBName, c.DBTimezone)
+		c.DBUser, c.DBPassword, c.DBHost, c.DBPort, c.DBName, url.QueryEscape(c.DBTimezone))
 }

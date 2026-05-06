@@ -21,7 +21,7 @@ type InventoryLog struct {
 	// Relationships
 	Product Product `json:"product,omitempty"`
 	Variant *ProductVariant `json:"variant,omitempty"`
-	Creator User `json:"creator,omitempty"`
+	Creator User `gorm:"foreignKey:CreatedBy" json:"creator,omitempty"`
 }
 
 func (InventoryLog) TableName() string {

@@ -8,6 +8,9 @@ import (
 )
 
 func InitLogger(level, filePath string) (*zap.Logger, error) {
+	if err := EnsureLogDir(filePath); err != nil {
+		return nil, err
+	}
 	var zapLevel zapcore.Level
 	switch level {
 	case "debug":

@@ -16,7 +16,7 @@ type FlashSale struct {
 	UpdatedAt   time.Time  `json:"updated_at"`
 
 	// Relationships
-	Creator User            `json:"creator,omitempty"`
+	Creator User            `gorm:"foreignKey:CreatedBy" json:"creator,omitempty"`
 	Items   []FlashSaleItem `json:"items,omitempty"`
 }
 

@@ -10,7 +10,7 @@ type StockReservation struct {
 	VariantID  *uint64    `json:"variant_id,omitempty"`
 	OrderID    uint64     `gorm:"not null;index" json:"order_id"`
 	Quantity   int        `gorm:"not null" json:"quantity"`
-	ReservedAt time.Time  `gorm:"default:CURRENT_TIMESTAMP" json:"reserved_at"`
+	ReservedAt time.Time  `gorm:"autoCreateTime" json:"reserved_at"`
 	ExpiresAt  time.Time  `gorm:"not null" json:"expires_at"`
 	IsReleased bool       `gorm:"default:false" json:"is_released"`
 	ReleasedAt *time.Time `json:"released_at,omitempty"`

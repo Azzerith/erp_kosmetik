@@ -18,7 +18,7 @@ type TrendData struct {
 	Language        string         `gorm:"type:varchar(10);default:'id'" json:"language"`
 	PeriodStart     time.Time      `gorm:"not null" json:"period_start"`
 	PeriodEnd       time.Time      `gorm:"not null" json:"period_end"`
-	RecordedAt      time.Time      `gorm:"default:CURRENT_TIMESTAMP" json:"recorded_at"`
+	RecordedAt      time.Time      `gorm:"autoCreateTime" json:"recorded_at"`
 
 	// Relationships
 	ProductMappings []ProductTrendMapping `json:"-"`

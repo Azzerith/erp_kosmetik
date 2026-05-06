@@ -27,7 +27,7 @@ type TrendScoreHistory struct {
 	GoogleScore        *float64  `gorm:"type:decimal(5,2)" json:"google_score,omitempty"`
 	TikTokScore        *float64  `gorm:"type:decimal(5,2)" json:"tiktok_score,omitempty"`
 	SalesVelocityScore *float64  `gorm:"type:decimal(5,2)" json:"sales_velocity_score,omitempty"`
-	RecordedAt         time.Time `gorm:"default:CURRENT_TIMESTAMP" json:"recorded_at"`
+	RecordedAt         time.Time `gorm:"autoCreateTime" json:"recorded_at"`
 
 	Product Product `json:"product,omitempty"`
 }
