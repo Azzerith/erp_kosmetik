@@ -1,0 +1,2094 @@
+openapi: 3.0.3
+info:
+  title: ERP Cosmetics API
+  description: |
+    API Documentation untuk ERP Penjualan Kosmetik & Obat Tradisional Berbasis Trend.
+    
+    ## Fitur Utama:
+    * Autentikasi dengan JWT & OAuth (Google, Facebook)
+    * Manajemen Produk dengan Trend Score
+    * Sistem Keranjang Belanja
+    * Transaksi dengan Midtrans
+    * Pelacakan Pengiriman dengan RajaOngkir
+    * Sistem Voucher & Diskon
+    * Review & Rating Produk
+    * Dashboard Analitik & Laporan
+    * Trend Engine Real-time
+  version: 1.0.0
+  contact:
+    name: ERP Cosmetics Team
+    email: support@erpcosmetics.com
+  license:
+    name: Proprietary
+
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Development Server
+  - url: https://api.erpcosmetics.com/api/v1
+    description: Production Server
+
+tags:
+  - name: Auth
+    description: Autentikasi dan Manajemen User
+  - name: Products
+    description: Manajemen Produk
+  - name: Categories
+    description: Manajemen Kategori
+  - name: Cart
+    description: Keranjang Belanja
+  - name: Orders
+    description: Manajemen Pesanan
+  - name: Payments
+    description: Pembayaran
+  - name: Reviews
+    description: Review & Rating
+  - name: Vouchers
+    description: Voucher & Diskon
+  - name: Shipping
+    description: Pengiriman & Ongkos Kirim
+  - name: Trends
+    description: Data Trend Real-time
+  - name: Reports
+    description: Laporan & Analitik (Admin)
+  - name: Webhooks
+    description: Webhook Notifikasi
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Masukkan token JWT yang didapat dari login
+
+  schemas:
+    # ==================== COMMON ====================
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Operation successful"
+        data:
+          type: object
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: "Error message"
+        error:
+          type: string
+          example: "Detailed error description"
+
+    PaginationMeta:
+      type: object
+      properties:
+        page:
+          type: integer
+          example: 1
+        limit:
+          type: integer
+          example: 10
+        total_data:
+          type: integer
+          example: 100
+        total_pages:
+          type: integer
+          example: 10
+
+    # ==================== AUTH ====================
+    RegisterRequest:
+      type: object
+      required:
+        - email
+        - password
+        - name
+        - phone
+      properties:
+        email:
+          type: string
+          format: email
+          example: "user@example.com"
+        password:
+          type: string
+          format: password
+          minLength: 8
+          example: "password123"
+        name:
+          type: string
+          example: "John Doe"
+        phone:
+          type: string
+          example: "081234567890"
+
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          example: "user@example.com"
+        password:
+          type: string
+          format: password
+          example: "password123"
+
+    LoginResponse:
+      type: object
+      properties:
+        access_token:
+          type: string
+          example: "eyJhbGciOiJIUzI1NiIs..."
+        refresh_token:
+          type: string
+          example: "eyJhbGciOiJIUzI1NiIs..."
+        token_type:
+          type: string
+          example: "Bearer"
+        expires_in:
+          type: integer
+          example: 3600
+        user:
+          $ref: '#/components/schemas/UserResponse'
+
+    UserResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        email:
+          type: string
+          example: "user@example.com"
+        name:
+          type: string
+          example: "John Doe"
+        phone:
+          type: string
+          example: "081234567890"
+        avatar_url:
+          type: string
+          nullable: true
+        role:
+          type: string
+          enum: [super_admin, admin, staff, customer]
+          example: "customer"
+        loyalty_points:
+          type: integer
+          example: 0
+        email_verified:
+          type: boolean
+          example: false
+        created_at:
+          type: string
+          format: date-time
+
+    RefreshTokenRequest:
+      type: object
+      required:
+        - refresh_token
+      properties:
+        refresh_token:
+          type: string
+          example: "eyJhbGciOiJIUzI1NiIs..."
+
+    ForgotPasswordRequest:
+      type: object
+      required:
+        - email
+      properties:
+        email:
+          type: string
+          format: email
+
+    ResetPasswordRequest:
+      type: object
+      required:
+        - token
+        - new_password
+      properties:
+        token:
+          type: string
+        new_password:
+          type: string
+          minLength: 8
+
+    ChangePasswordRequest:
+      type: object
+      required:
+        - old_password
+        - new_password
+      properties:
+        old_password:
+          type: string
+        new_password:
+          type: string
+          minLength: 8
+
+    UpdateProfileRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        phone:
+          type: string
+
+    # ==================== PRODUCTS ====================
+    ProductResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        sku:
+          type: string
+          example: "SKIN-001"
+        name:
+          type: string
+          example: "Brightening Vitamin C Serum"
+        slug:
+          type: string
+          example: "brightening-vitamin-c-serum"
+        description:
+          type: string
+        short_description:
+          type: string
+        category_id:
+          type: integer
+        category_name:
+          type: string
+        brand_id:
+          type: integer
+          nullable: true
+        brand_name:
+          type: string
+          nullable: true
+        base_price:
+          type: number
+          format: float
+          example: 189000
+        sale_price:
+          type: number
+          format: float
+          nullable: true
+        weight_gram:
+          type: integer
+          example: 50
+        stock:
+          type: integer
+          example: 89
+        trend_score:
+          type: number
+          format: float
+          example: 95.5
+        trend_badge:
+          type: string
+          enum: [trending, viral, best_seller, hot, none]
+          example: "viral"
+        total_sold:
+          type: integer
+          example: 1234
+        is_active:
+          type: boolean
+        is_featured:
+          type: boolean
+        rating:
+          type: number
+          format: float
+          example: 4.8
+        total_reviews:
+          type: integer
+          example: 234
+        images:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductImageResponse'
+        variants:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductVariantResponse'
+        created_at:
+          type: string
+          format: date-time
+
+    ProductImageResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        url:
+          type: string
+        is_primary:
+          type: boolean
+        sort_order:
+          type: integer
+
+    ProductVariantResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        variant_type:
+          type: string
+        variant_value:
+          type: string
+        price_modifier:
+          type: number
+          format: float
+        stock:
+          type: integer
+        sku:
+          type: string
+
+    CreateProductRequest:
+      type: object
+      required:
+        - name
+        - sku
+        - category_id
+        - base_price
+      properties:
+        name:
+          type: string
+        sku:
+          type: string
+        description:
+          type: string
+        short_description:
+          type: string
+        category_id:
+          type: integer
+        brand_id:
+          type: integer
+        base_price:
+          type: number
+        sale_price:
+          type: number
+        weight_gram:
+          type: integer
+        stock:
+          type: integer
+        is_active:
+          type: boolean
+        is_featured:
+          type: boolean
+
+    UpdateProductRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        short_description:
+          type: string
+        category_id:
+          type: integer
+        brand_id:
+          type: integer
+        base_price:
+          type: number
+        sale_price:
+          type: number
+        weight_gram:
+          type: integer
+        stock:
+          type: integer
+        is_active:
+          type: boolean
+        is_featured:
+          type: boolean
+
+    ListProductsRequest:
+      type: object
+      properties:
+        page:
+          type: integer
+          default: 1
+        limit:
+          type: integer
+          default: 10
+        category_id:
+          type: integer
+        brand_id:
+          type: integer
+        min_price:
+          type: number
+        max_price:
+          type: number
+        search:
+          type: string
+        sort_by:
+          type: string
+          enum: [created_at, price, trend_score, total_sold]
+          default: "created_at"
+        sort_order:
+          type: string
+          enum: [ASC, DESC]
+          default: "DESC"
+
+    # ==================== CATEGORIES ====================
+    CategoryResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        slug:
+          type: string
+        description:
+          type: string
+        icon_url:
+          type: string
+        level:
+          type: integer
+        sort_order:
+          type: integer
+        parent_id:
+          type: integer
+          nullable: true
+        children:
+          type: array
+          items:
+            $ref: '#/components/schemas/CategoryResponse'
+
+    CreateCategoryRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        parent_id:
+          type: integer
+        icon_url:
+          type: string
+        image_url:
+          type: string
+        sort_order:
+          type: integer
+
+    # ==================== CART ====================
+    CartResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        user_id:
+          type: integer
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/CartItemResponse'
+        subtotal:
+          type: number
+          format: float
+        total_items:
+          type: integer
+
+    CartItemResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        product_id:
+          type: integer
+        product_name:
+          type: string
+        variant_id:
+          type: integer
+          nullable: true
+        variant_name:
+          type: string
+          nullable: true
+        price:
+          type: number
+          format: float
+        quantity:
+          type: integer
+        subtotal:
+          type: number
+          format: float
+        product_image:
+          type: string
+        stock:
+          type: integer
+
+    AddToCartRequest:
+      type: object
+      required:
+        - product_id
+        - quantity
+      properties:
+        product_id:
+          type: integer
+        variant_id:
+          type: integer
+        quantity:
+          type: integer
+          minimum: 1
+          default: 1
+
+    UpdateCartItemRequest:
+      type: object
+      required:
+        - quantity
+      properties:
+        quantity:
+          type: integer
+          minimum: 0
+
+    # ==================== ORDERS ====================
+    OrderResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        order_number:
+          type: string
+        status:
+          type: string
+          enum: [pending_payment, paid, processing, shipped, delivered, completed, cancelled, refunded]
+        payment_status:
+          type: string
+          enum: [unpaid, pending, paid, failed, refunded]
+        fulfillment_status:
+          type: string
+          enum: [unfulfilled, processing, shipped, delivered]
+        subtotal:
+          type: number
+        shipping_cost:
+          type: number
+        discount_amount:
+          type: number
+        total_amount:
+          type: number
+        courier:
+          type: string
+        tracking_number:
+          type: string
+        paid_at:
+          type: string
+          format: date-time
+        shipped_at:
+          type: string
+          format: date-time
+        delivered_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderItemResponse'
+        shipping_address:
+          $ref: '#/components/schemas/AddressResponse'
+
+    OrderItemResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        product_id:
+          type: integer
+        product_name:
+          type: string
+        product_sku:
+          type: string
+        variant_name:
+          type: string
+        price:
+          type: number
+        quantity:
+          type: integer
+        subtotal:
+          type: number
+
+    AddressResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        label:
+          type: string
+        recipient_name:
+          type: string
+        phone:
+          type: string
+        province:
+          type: string
+        city:
+          type: string
+        district:
+          type: string
+        postal_code:
+          type: string
+        address_detail:
+          type: string
+        is_default:
+          type: boolean
+
+    CreateOrderRequest:
+      type: object
+      required:
+        - address_id
+        - courier
+        - courier_service
+        - shipping_cost
+      properties:
+        address_id:
+          type: integer
+        courier:
+          type: string
+          enum: [jne, jnt, sicepat, pos]
+        courier_service:
+          type: string
+        shipping_cost:
+          type: number
+        voucher_code:
+          type: string
+        notes:
+          type: string
+
+    UpdateOrderStatusRequest:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum: [pending_payment, paid, processing, shipped, delivered, completed, cancelled, refunded]
+
+    UpdateTrackingRequest:
+      type: object
+      required:
+        - tracking_number
+        - courier
+      properties:
+        tracking_number:
+          type: string
+        courier:
+          type: string
+
+    # ==================== PAYMENTS ====================
+    InitiatePaymentRequest:
+      type: object
+      required:
+        - order_id
+      properties:
+        order_id:
+          type: integer
+
+    InitiatePaymentResponse:
+      type: object
+      properties:
+        snap_token:
+          type: string
+        redirect_url:
+          type: string
+
+    PaymentStatusResponse:
+      type: object
+      properties:
+        order_id:
+          type: string
+        status:
+          type: string
+          enum: [pending, success, failed, expired, refunded]
+        amount:
+          type: number
+        payment_type:
+          type: string
+        paid_at:
+          type: string
+          format: date-time
+
+    # ==================== REVIEWS ====================
+    ReviewResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        product_id:
+          type: integer
+        user_id:
+          type: integer
+        user_name:
+          type: string
+        user_avatar:
+          type: string
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        title:
+          type: string
+        comment:
+          type: string
+        images:
+          type: array
+          items:
+            type: string
+        is_verified_purchase:
+          type: boolean
+        helpful_count:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+
+    CreateReviewRequest:
+      type: object
+      required:
+        - product_id
+        - rating
+      properties:
+        product_id:
+          type: integer
+        order_id:
+          type: integer
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        title:
+          type: string
+        comment:
+          type: string
+
+    UpdateReviewRequest:
+      type: object
+      properties:
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        title:
+          type: string
+        comment:
+          type: string
+
+    # ==================== VOUCHERS ====================
+    VoucherResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        code:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        type:
+          type: string
+          enum: [percentage, fixed_amount, free_shipping]
+        value:
+          type: number
+        max_discount_amount:
+          type: number
+        min_order_amount:
+          type: number
+        valid_from:
+          type: string
+          format: date
+        valid_until:
+          type: string
+          format: date
+        is_active:
+          type: boolean
+
+    ValidateVoucherRequest:
+      type: object
+      required:
+        - code
+        - order_amount
+      properties:
+        code:
+          type: string
+        order_amount:
+          type: number
+
+    ValidateVoucherResponse:
+      type: object
+      properties:
+        valid:
+          type: boolean
+        discount_amount:
+          type: number
+        message:
+          type: string
+        voucher:
+          $ref: '#/components/schemas/VoucherResponse'
+
+    CreateVoucherRequest:
+      type: object
+      required:
+        - code
+        - name
+        - type
+        - value
+        - valid_from
+        - valid_until
+      properties:
+        code:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        type:
+          type: string
+        value:
+          type: number
+        max_discount_amount:
+          type: number
+        min_order_amount:
+          type: number
+        usage_limit:
+          type: integer
+        usage_per_user:
+          type: integer
+        valid_from:
+          type: string
+          format: date
+        valid_until:
+          type: string
+          format: date
+
+    # ==================== SHIPPING ====================
+    ProvinceResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+
+    CityResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        province_id:
+          type: string
+        province_name:
+          type: string
+        postal_code:
+          type: string
+
+    CalculateCostRequest:
+      type: object
+      required:
+        - origin
+        - destination
+        - weight
+        - courier
+      properties:
+        origin:
+          type: string
+        destination:
+          type: string
+        weight:
+          type: integer
+        courier:
+          type: string
+          enum: [jne, jnt, sicepat, pos]
+
+    CalculateCostResponse:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ShippingCostResult'
+
+    ShippingCostResult:
+      type: object
+      properties:
+        code:
+          type: string
+        name:
+          type: string
+        costs:
+          type: array
+          items:
+            type: object
+            properties:
+              service:
+                type: string
+              description:
+                type: string
+              cost:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    value:
+                      type: integer
+                    etd:
+                      type: string
+                    note:
+                      type: string
+
+    # ==================== TRENDS ====================
+    TrendingKeywordResponse:
+      type: object
+      properties:
+        keyword:
+          type: string
+        score:
+          type: number
+        trend:
+          type: string
+          enum: [up, down, stable]
+        growth_rate:
+          type: number
+
+    TrendScoreResponse:
+      type: object
+      properties:
+        product_id:
+          type: integer
+        trend_score:
+          type: number
+        trend_badge:
+          type: string
+        google_score:
+          type: number
+        tiktok_score:
+          type: number
+        sales_velocity:
+          type: number
+        last_updated:
+          type: string
+          format: date-time
+
+    TrendDashboardResponse:
+      type: object
+      properties:
+        top_keywords:
+          type: array
+          items:
+            $ref: '#/components/schemas/TrendingKeywordResponse'
+        top_products:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductResponse'
+        score_history:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+              score:
+                type: number
+        summary:
+          type: object
+          properties:
+            total_products_tracked:
+              type: integer
+            average_trend_score:
+              type: number
+            highest_trend_score:
+              type: number
+            trending_up_count:
+              type: integer
+            trending_down_count:
+              type: integer
+
+    # ==================== REPORTS ====================
+    SalesReportResponse:
+      type: object
+      properties:
+        total_revenue:
+          type: number
+        total_orders:
+          type: integer
+        average_order_value:
+          type: number
+        top_products:
+          type: array
+          items:
+            type: object
+            properties:
+              product_id:
+                type: integer
+              product_name:
+                type: string
+              total_sold:
+                type: integer
+              revenue:
+                type: number
+        daily_sales:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+              orders:
+                type: integer
+              revenue:
+                type: number
+        revenue_by_status:
+          type: object
+          additionalProperties:
+            type: number
+
+    InventoryReportResponse:
+      type: object
+      properties:
+        total_products:
+          type: integer
+        total_stock:
+          type: integer
+        total_value:
+          type: number
+        low_stock_products:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+              name:
+                type: string
+              sku:
+                type: string
+              stock:
+                type: integer
+              threshold:
+                type: integer
+        out_of_stock_products:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+              name:
+                type: string
+              sku:
+                type: string
+        top_categories:
+          type: array
+          items:
+            type: object
+            properties:
+              category_name:
+                type: string
+              total_stock:
+                type: integer
+              product_count:
+                type: integer
+
+    DashboardSummaryResponse:
+      type: object
+      properties:
+        today_sales:
+          type: number
+        today_orders:
+          type: integer
+        week_sales:
+          type: number
+        month_sales:
+          type: number
+        total_customers:
+          type: integer
+        total_products:
+          type: integer
+        low_stock_count:
+          type: integer
+        pending_orders:
+          type: integer
+        average_trend_score:
+          type: number
+        last_updated:
+          type: string
+          format: date-time
+
+security:
+  - BearerAuth: []
+
+paths:
+  # ==================== AUTH ENDPOINTS ====================
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Register user baru
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: Registrasi berhasil
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          description: Validasi gagal
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Login user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login berhasil
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          description: Login gagal
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/refresh:
+    post:
+      tags: [Auth]
+      summary: Refresh token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshTokenRequest'
+      responses:
+        '200':
+          description: Token berhasil diperbarui
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RefreshTokenResponse'
+
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: Logout user
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Logout berhasil
+
+  /auth/me:
+    get:
+      tags: [Auth]
+      summary: Get user profile
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Profile user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+
+  /auth/profile:
+    put:
+      tags: [Auth]
+      summary: Update user profile
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProfileRequest'
+      responses:
+        '200':
+          description: Profile updated
+
+  /auth/change-password:
+    post:
+      tags: [Auth]
+      summary: Change password
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangePasswordRequest'
+      responses:
+        '200':
+          description: Password changed
+
+  /auth/forgot-password:
+    post:
+      tags: [Auth]
+      summary: Forgot password
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ForgotPasswordRequest'
+      responses:
+        '200':
+          description: Reset link sent
+
+  /auth/reset-password:
+    post:
+      tags: [Auth]
+      summary: Reset password
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResetPasswordRequest'
+      responses:
+        '200':
+          description: Password reset
+
+  /auth/google:
+    get:
+      tags: [Auth]
+      summary: Login dengan Google
+      security: []
+      responses:
+        '302':
+          description: Redirect ke Google OAuth
+
+  /auth/facebook:
+    get:
+      tags: [Auth]
+      summary: Login dengan Facebook
+      security: []
+      responses:
+        '302':
+          description: Redirect ke Facebook OAuth
+
+  # ==================== PRODUCTS ENDPOINTS ====================
+  /products:
+    get:
+      tags: [Products]
+      summary: Get list products
+      security: []
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+        - in: query
+          name: limit
+          schema:
+            type: integer
+        - in: query
+          name: category_id
+          schema:
+            type: integer
+        - in: query
+          name: brand_id
+          schema:
+            type: integer
+        - in: query
+          name: min_price
+          schema:
+            type: number
+        - in: query
+          name: max_price
+          schema:
+            type: number
+        - in: query
+          name: search
+          schema:
+            type: string
+        - in: query
+          name: sort_by
+          schema:
+            type: string
+        - in: query
+          name: sort_order
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List products
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ProductResponse'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+
+  /products/trending:
+    get:
+      tags: [Products]
+      summary: Get trending products
+      security: []
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 8
+      responses:
+        '200':
+          description: Trending products
+
+  /products/flash-sale:
+    get:
+      tags: [Products]
+      summary: Get flash sale products
+      security: []
+      responses:
+        '200':
+          description: Flash sale products
+
+  /products/{slug}:
+    get:
+      tags: [Products]
+      summary: Get product by slug
+      security: []
+      parameters:
+        - in: path
+          name: slug
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Product detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductResponse'
+        '404':
+          description: Product not found
+
+  # ==================== CATEGORIES ENDPOINTS ====================
+  /categories:
+    get:
+      tags: [Categories]
+      summary: Get all categories
+      security: []
+      responses:
+        '200':
+          description: List categories
+
+  /categories/{slug}:
+    get:
+      tags: [Categories]
+      summary: Get category by slug
+      security: []
+      parameters:
+        - in: path
+          name: slug
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Category detail
+
+  # ==================== CART ENDPOINTS ====================
+  /cart:
+    get:
+      tags: [Cart]
+      summary: Get user cart
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Cart detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CartResponse'
+
+  /cart/clear:
+    delete:
+      tags: [Cart]
+      summary: Clear cart
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Cart cleared
+
+  /cart/items:
+    post:
+      tags: [Cart]
+      summary: Add item to cart
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddToCartRequest'
+      responses:
+        '200':
+          description: Item added
+
+  /cart/items/{id}:
+    put:
+      tags: [Cart]
+      summary: Update cart item quantity
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCartItemRequest'
+      responses:
+        '200':
+          description: Cart updated
+
+    delete:
+      tags: [Cart]
+      summary: Remove item from cart
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Item removed
+
+  # ==================== ORDERS ENDPOINTS ====================
+  /orders:
+    get:
+      tags: [Orders]
+      summary: Get user orders
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+        - in: query
+          name: limit
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: List orders
+
+    post:
+      tags: [Orders]
+      summary: Create new order
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOrderRequest'
+      responses:
+        '201':
+          description: Order created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+
+  /orders/{orderNumber}:
+    get:
+      tags: [Orders]
+      summary: Get order by number
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: orderNumber
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Order detail
+        '404':
+          description: Order not found
+
+  /orders/{id}/cancel:
+    post:
+      tags: [Orders]
+      summary: Cancel order
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Order cancelled
+
+  # ==================== PAYMENTS ENDPOINTS ====================
+  /payments/initiate:
+    post:
+      tags: [Payments]
+      summary: Initiate payment
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InitiatePaymentRequest'
+      responses:
+        '200':
+          description: Payment initiated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InitiatePaymentResponse'
+
+  /payments/{orderId}/status:
+    get:
+      tags: [Payments]
+      summary: Get payment status
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: orderId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Payment status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentStatusResponse'
+
+  # ==================== REVIEWS ENDPOINTS ====================
+  /reviews:
+    post:
+      tags: [Reviews]
+      summary: Create review
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateReviewRequest'
+      responses:
+        '201':
+          description: Review created
+
+  /reviews/{id}:
+    put:
+      tags: [Reviews]
+      summary: Update review
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateReviewRequest'
+      responses:
+        '200':
+          description: Review updated
+
+    delete:
+      tags: [Reviews]
+      summary: Delete review
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Review deleted
+
+  /reviews/{id}/helpful:
+    post:
+      tags: [Reviews]
+      summary: Mark review as helpful
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Marked as helpful
+
+  # ==================== VOUCHERS ENDPOINTS ====================
+  /vouchers/validate:
+    post:
+      tags: [Vouchers]
+      summary: Validate voucher
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidateVoucherRequest'
+      responses:
+        '200':
+          description: Validation result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidateVoucherResponse'
+
+  # ==================== SHIPPING ENDPOINTS ====================
+  /shipping/provinces:
+    get:
+      tags: [Shipping]
+      summary: Get provinces list
+      security: []
+      responses:
+        '200':
+          description: List provinces
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProvinceResponse'
+
+  /shipping/cities/{provinceId}:
+    get:
+      tags: [Shipping]
+      summary: Get cities by province
+      security: []
+      parameters:
+        - in: path
+          name: provinceId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List cities
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CityResponse'
+
+  /shipping/calculate:
+    post:
+      tags: [Shipping]
+      summary: Calculate shipping cost
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CalculateCostRequest'
+      responses:
+        '200':
+          description: Shipping cost calculation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CalculateCostResponse'
+
+  # ==================== TRENDS ENDPOINTS ====================
+  /trends/keywords:
+    get:
+      tags: [Trends]
+      summary: Get trending keywords
+      security: []
+      responses:
+        '200':
+          description: Trending keywords
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TrendingKeywordResponse'
+
+  /trends/products:
+    get:
+      tags: [Trends]
+      summary: Get trending products
+      security: []
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: Trending products
+
+  /trends/products/{id}/score:
+    get:
+      tags: [Trends]
+      summary: Get product trend score
+      security: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Trend score
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrendScoreResponse'
+
+  # ==================== WEBHOOKS ENDPOINTS ====================
+  /payments/webhook:
+    post:
+      tags: [Webhooks]
+      summary: Midtrans payment webhook
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Webhook processed
+
+  # ==================== ADMIN ENDPOINTS ====================
+  /admin/products:
+    post:
+      tags: [Products]
+      summary: Create product (Admin)
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateProductRequest'
+      responses:
+        '201':
+          description: Product created
+
+  /admin/products/{id}:
+    put:
+      tags: [Products]
+      summary: Update product (Admin)
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProductRequest'
+      responses:
+        '200':
+          description: Product updated
+
+    delete:
+      tags: [Products]
+      summary: Delete product (Admin)
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Product deleted
+
+  /admin/orders:
+    get:
+      tags: [Orders]
+      summary: Get all orders (Admin)
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+        - in: query
+          name: limit
+          schema:
+            type: integer
+        - in: query
+          name: status
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List orders
+
+  /admin/orders/{id}/status:
+    put:
+      tags: [Orders]
+      summary: Update order status (Admin)
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateOrderStatusRequest'
+      responses:
+        '200':
+          description: Status updated
+
+  /admin/orders/{id}/tracking:
+    put:
+      tags: [Orders]
+      summary: Update tracking (Admin)
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTrackingRequest'
+      responses:
+        '200':
+          description: Tracking updated
+
+  /admin/dashboard/summary:
+    get:
+      tags: [Reports]
+      summary: Get dashboard summary (Admin)
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardSummaryResponse'
+
+  /admin/reports/sales:
+    get:
+      tags: [Reports]
+      summary: Get sales report (Admin)
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: query
+          name: date_from
+          schema:
+            type: string
+            format: date
+        - in: query
+          name: date_to
+          schema:
+            type: string
+            format: date
+        - in: query
+          name: group_by
+          schema:
+            type: string
+            enum: [day, month, year]
+      responses:
+        '200':
+          description: Sales report
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SalesReportResponse'
+
+  /admin/reports/inventory:
+    get:
+      tags: [Reports]
+      summary: Get inventory report (Admin)
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Inventory report
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InventoryReportResponse'
+
+  /admin/trends/dashboard:
+    get:
+      tags: [Trends]
+      summary: Get trend dashboard (Admin)
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Trend dashboard
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrendDashboardResponse'
+
+  /admin/trends/refresh:
+    post:
+      tags: [Trends]
+      summary: Manually refresh trends (Admin)
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Trends refreshed
+
+  /admin/vouchers:
+    post:
+      tags: [Vouchers]
+      summary: Create voucher (Admin)
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateVoucherRequest'
+      responses:
+        '201':
+          description: Voucher created
+
+  /admin/vouchers/{id}:
+    put:
+      tags: [Vouchers]
+      summary: Update voucher (Admin)
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateVoucherRequest'
+      responses:
+        '200':
+          description: Voucher updated
+
+    delete:
+      tags: [Vouchers]
+      summary: Delete voucher (Admin)
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Voucher deleted
